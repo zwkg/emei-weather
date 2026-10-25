@@ -68,6 +68,42 @@ if not os.path.isabs(LOGO_IMAGE):
     LOGO_IMAGE = os.path.join(BASE, LOGO_IMAGE)
 if not os.path.exists(LOGO_IMAGE):
     LOGO_IMAGE = ""
+
+BG_DIR = os.path.join(BASE, "bg")
+
+
+def bg_key(code):
+    """天气代码 → 底图档位，和图标分类保持一致。"""
+    if code in (0, 1):
+        return "sun"
+    if code == 2:
+        return "partly"
+    if code == 3:
+        return "cloud"
+    if code in (45, 48):
+        return "fog"
+    if code in (51, 53, 55, 56, 57):
+        return "drizzle"
+    if code in (61, 63, 65, 66, 67, 80, 81, 82):
+        return "rain"
+    if code in (71, 73, 75, 77, 85, 86):
+        return "snow"
+    if code in (95, 96, 99):
+        return "thunder"
+    return "sun"
+
+
+def bg_data_uri(code):
+    """优先取对应天气底图，没有就回落到晴天原图。"""
+    for key in (bg_key(code), "sun"):
+        for ext in (".jpg", ".jpeg", ".png"):
+            p = os.path.join(BG_DIR, key + ext)
+            if os.path.exists(p):
+                with open(p, "rb") as f:
+                    b = base64.b64encode(f.read()).decode("ascii")
+                mime = "image/png" if ext == ".png" else "image/jpeg"
+                return "data:%s;base64,%s" % (mime, b)
+    return ""
 WEEK = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
 
 
@@ -210,6 +246,39 @@ body {
     radial-gradient(700px 520px at 4% 30%, rgba(84,196,182,0.12), transparent 66%),
     linear-gradient(168deg,#0a161d 0%,#0e2530 44%,#123239 76%,#0d2027 100%);
 }
+.hero-bg {
+  position:absolute; left:0; right:0; top:0; height:790px;
+  background-size:cover; background-position:center 38%; background-repeat:no-repeat;
+  z-index:0; filter:saturate(0.80) brightness(1.12) contrast(1.03);
+}
+.hero-bg::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg,
+    rgba(7,17,23,0.74) 0%,
+    rgba(7,17,23,0.46) 34%,
+    rgba(7,17,23,0.10) 58%,
+    rgba(7,17,23,0) 72%);
+}
+.hero-bg::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(180deg,
+    rgba(7,17,23,0.86) 0%,
+    rgba(8,20,27,0.40) 28%,
+    rgba(9,22,29,0.54) 60%,
+    rgba(10,24,31,0.90) 86%,
+    #0b1a22 100%);
+}
+.wrap > *:not(.hero-bg):not(.rings) { position:relative; z-index:2; }
+/* 雾天/雪天底子太亮，文字会糊，单独压一档 */
+.hero-bg.dim { filter:saturate(0.82) brightness(1.02) contrast(1.04); }
+.hero-bg.dim::after {
+  background:linear-gradient(180deg,
+    rgba(7,17,23,0.88) 0%,
+    rgba(8,20,27,0.56) 28%,
+    rgba(9,22,29,0.64) 60%,
+    rgba(10,24,31,0.93) 86%,
+    #0b1a22 100%);
+}
 .rings { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
 .rings i { position:absolute; display:block; border-radius:50%; border:1px solid rgba(140,205,205,0.10); }
 .rings i:nth-child(1){ width:900px; height:900px; left:-220px; top:-340px; }
@@ -221,6 +290,8 @@ body {
 .hd-l img { height:150px; width:auto; display:block; }
 .dot { width:10px; height:10px; border-radius:50%; background:#5BD3B4; box-shadow:0 0 0 6px rgba(91,211,180,0.15); }
 .hd-r { font-size:24px; color:#71919E; letter-spacing:1px; }
+/* 文字压在照片上时要兜底，避免落在金色亮部读不清 */
+.hd-r, .hero-place, .cmp, .sun { text-shadow:0 2px 16px rgba(4,12,17,0.85), 0 0 4px rgba(4,12,17,0.5); }
 
 .hero { margin-top:52px; display:flex; align-items:center; gap:34px; position:relative; }
 .hero-temp {
@@ -348,6 +419,11 @@ def build_html(data, cal=None):
             logo_html = '<img src="data:image/png;base64,%s" alt="弄月峨眉山居">' % (
                 base64.b64encode(_lf.read()).decode("ascii"))
 
+    _bg = bg_data_uri(top["code"])
+    _dim = " dim" if bg_key(top["code"]) in ("fog", "snow") else ""
+    bg_html = ("<div class=\"hero-bg%s\" style='background-image:url(%s)'></div>"
+               % (_dim, _bg)) if _bg else ""
+
     uvw = ""
     if top["uv"] is not None:
         u = top["uv"]
@@ -386,6 +462,7 @@ def build_html(data, cal=None):
 
     return """<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
 <style>%s</style></head><body><div class="wrap">
+%s
 <div class="rings"><i></i><i></i><i></i></div>
 
 <div class="hd">
@@ -420,7 +497,7 @@ def build_html(data, cal=None):
 </div>
 <div class="src">实况：中国气象局自动站 · 预报：Open-Meteo 数值模式 · 图为自动生成，仅供参考</div>
 </div></body></html>""" % (
-        CSS, logo_html, today.month, today.day, WEEK[today.weekday()], top["updated"] or "07:00",
+        CSS, bg_html, logo_html, today.month, today.day, WEEK[today.weekday()], top["updated"] or "07:00",
         t_top, svg_icon(top["code"], 104), top["short"], hero_desc,
         low["short"], t_low, t_top, diff, sun_html, fest_html,
         TIP_ICON, cloth_tip(diff),

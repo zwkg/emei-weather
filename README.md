@@ -7,9 +7,26 @@
 ```
 web/     看板服务（中国气象局自动站实测 + Open-Meteo 预报，Node 原生 http，无依赖）
 card/    出图脚本（Playwright 渲染 HTML → JPEG）与微信推送
+  bg/    天气底图：七种天气各一张，按当天金顶天气代码自动选
 out/     每天产出的图：latest.jpg 一直是今天这张
 .github/ 定时任务配置
 ```
+
+## 天气底图怎么换
+
+`card/bg/` 下按天气档位命名，缺哪张就自动回落到 `sun.jpg`：
+
+| 文件 | 对应天气 | WMO code |
+| --- | --- | --- |
+| `sun.jpg` | 晴 | 0, 1 |
+| `partly.jpg` | 晴间多云 | 2 |
+| `cloud.jpg` | 阴 | 3 |
+| `fog.jpg` | 雾 | 45, 48 |
+| `rain.jpg` | 毛毛雨 / 雨 / 阵雨 | 51–67, 80–82 |
+| `snow.jpg` | 雪 | 71–77, 85, 86 |
+| `thunder.jpg` | 雷雨 | 95, 96, 99 |
+
+雾天和雪天会自动多压一档暗（`.hero-bg.dim`），否则背景太亮文字会糊。
 
 ## 本地跑
 
