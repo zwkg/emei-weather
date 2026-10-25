@@ -277,10 +277,10 @@ body {
 }
 /* 竖版照片：同样的横幅只会露出天空，整体拉高、焦点下移 */
 .hero-bg.tall {
-  height:1130px; background-position:center 34%;
-  filter:saturate(0.86) brightness(1.24) contrast(1.04);
-  -webkit-mask-image:linear-gradient(180deg,#000 66%, rgba(0,0,0,0.72) 86%, transparent 100%);
-  mask-image:linear-gradient(180deg,#000 66%, rgba(0,0,0,0.72) 86%, transparent 100%);
+  height:1130px; background-position:center 58%;
+  filter:saturate(0.88) brightness(1.16) contrast(1.05);
+  -webkit-mask-image:linear-gradient(180deg,#000 62%, rgba(0,0,0,0.74) 84%, transparent 100%);
+  mask-image:linear-gradient(180deg,#000 62%, rgba(0,0,0,0.74) 84%, transparent 100%);
 }
 .hero-bg::before {
   content:''; position:absolute; inset:0;
@@ -293,20 +293,20 @@ body {
 .hero-bg::after {
   content:''; position:absolute; inset:0;
   background:linear-gradient(180deg,
-    rgba(7,17,23,0.84) 0%,
-    rgba(8,20,27,0.28) 26%,
-    rgba(9,22,29,0.40) 58%,
-    rgba(10,24,31,0.86) 86%,
+    rgba(7,17,23,0.80) 0%,
+    rgba(8,20,27,0.16) 24%,
+    rgba(9,22,29,0.26) 56%,
+    rgba(10,24,31,0.80) 84%,
     #0b1a22 100%);
 }
 .wrap > *:not(.hero-bg):not(.rings) { position:relative; z-index:2; }
 /* 雾天/雪天底子太亮，文字会糊，单独压一档 */
-.hero-bg.dim { filter:saturate(0.82) brightness(1.02) contrast(1.04); }
+.hero-bg.dim { filter:saturate(0.88) brightness(1.16) contrast(1.05); }
 .hero-bg.dim::after {
   background:linear-gradient(180deg,
-    rgba(7,17,23,0.88) 0%,
-    rgba(8,20,27,0.56) 28%,
-    rgba(9,22,29,0.64) 60%,
+    rgba(7,17,23,0.84) 0%,
+    rgba(8,20,27,0.34) 26%,
+    rgba(9,22,29,0.44) 58%,
     rgba(10,24,31,0.93) 86%,
     #0b1a22 100%);
 }
