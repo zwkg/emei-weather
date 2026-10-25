@@ -93,17 +93,39 @@ def bg_key(code):
     return "sun"
 
 
-def bg_data_uri(code):
-    """优先取对应天气底图，没有就回落到晴天原图。"""
-    for key in (bg_key(code), "sun"):
+def bg_path(code):
+    """挑出该天气对应的底图文件路径；没有就回落到晴天原图。
+
+    CARD_FORCE_BG=sun_v 可强制指定某一张，用于出样张对比。
+    """
+    force = os.environ.get("CARD_FORCE_BG", "").strip()
+    order = ([force] if force else []) + [bg_key(code), "sun"]
+    for key in order:
         for ext in (".jpg", ".jpeg", ".png"):
             p = os.path.join(BG_DIR, key + ext)
             if os.path.exists(p):
-                with open(p, "rb") as f:
-                    b = base64.b64encode(f.read()).decode("ascii")
-                mime = "image/png" if ext == ".png" else "image/jpeg"
-                return "data:%s;base64,%s" % (mime, b)
+                return p
     return ""
+
+
+def bg_data_uri(path):
+    """读成 base64，页面里不依赖 file:// 就能显示。"""
+    if not path:
+        return ""
+    with open(path, "rb") as f:
+        b = base64.b64encode(f.read()).decode("ascii")
+    mime = "image/png" if path.lower().endswith(".png") else "image/jpeg"
+    return "data:%s;base64,%s" % (mime, b)
+
+
+def bg_is_portrait(path):
+    """竖版底图要铺更高的横幅，否则只露出天空、主体全被裁掉。"""
+    try:
+        from PIL import Image
+        with Image.open(path) as im:
+            return im.height > im.width * 1.05
+    except Exception:
+        return False
 WEEK = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
 
 
@@ -250,6 +272,15 @@ body {
   position:absolute; left:0; right:0; top:0; height:790px;
   background-size:cover; background-position:center 38%; background-repeat:no-repeat;
   z-index:0; filter:saturate(0.80) brightness(1.12) contrast(1.03);
+  -webkit-mask-image:linear-gradient(180deg,#000 70%, rgba(0,0,0,0.70) 88%, transparent 100%);
+  mask-image:linear-gradient(180deg,#000 70%, rgba(0,0,0,0.70) 88%, transparent 100%);
+}
+/* 竖版照片：同样的横幅只会露出天空，整体拉高、焦点下移 */
+.hero-bg.tall {
+  height:1130px; background-position:center 34%;
+  filter:saturate(0.86) brightness(1.24) contrast(1.04);
+  -webkit-mask-image:linear-gradient(180deg,#000 66%, rgba(0,0,0,0.72) 86%, transparent 100%);
+  mask-image:linear-gradient(180deg,#000 66%, rgba(0,0,0,0.72) 86%, transparent 100%);
 }
 .hero-bg::before {
   content:''; position:absolute; inset:0;
@@ -262,10 +293,10 @@ body {
 .hero-bg::after {
   content:''; position:absolute; inset:0;
   background:linear-gradient(180deg,
-    rgba(7,17,23,0.86) 0%,
-    rgba(8,20,27,0.40) 28%,
-    rgba(9,22,29,0.54) 60%,
-    rgba(10,24,31,0.90) 86%,
+    rgba(7,17,23,0.84) 0%,
+    rgba(8,20,27,0.28) 26%,
+    rgba(9,22,29,0.40) 58%,
+    rgba(10,24,31,0.86) 86%,
     #0b1a22 100%);
 }
 .wrap > *:not(.hero-bg):not(.rings) { position:relative; z-index:2; }
@@ -285,13 +316,17 @@ body {
 .rings i:nth-child(2){ width:640px; height:640px; left:-90px; top:-190px; border-color:rgba(140,205,205,0.07); }
 .rings i:nth-child(3){ width:1100px; height:1100px; right:-470px; bottom:-500px; border-color:rgba(255,186,110,0.07); }
 
-.hd { display:flex; align-items:center; justify-content:space-between; position:relative; }
-.hd-l { display:flex; align-items:center; gap:15px; font-size:28px; letter-spacing:3px; color:#B7CFD8; }
+.hd { display:flex; align-items:center; justify-content:space-between; gap:24px; position:relative; }
+.hd-l { display:flex; align-items:center; gap:22px; font-size:28px; letter-spacing:3px; color:#B7CFD8; }
 .hd-l img { height:150px; width:auto; display:block; }
+/* 二维码挪到 LOGO 右侧，作为副品牌标识 */
+.hd-q { width:112px; height:112px; flex:none; border-radius:13px; background:#fff; padding:7px;
+  box-shadow:0 8px 26px rgba(3,10,14,0.42); }
+.hd-q img { width:100%; height:100%; display:block; border-radius:8px; }
 .dot { width:10px; height:10px; border-radius:50%; background:#5BD3B4; box-shadow:0 0 0 6px rgba(91,211,180,0.15); }
 .hd-r { font-size:24px; color:#71919E; letter-spacing:1px; }
 /* 文字压在照片上时要兜底，避免落在金色亮部读不清 */
-.hd-r, .hero-place, .cmp, .sun { text-shadow:0 2px 16px rgba(4,12,17,0.85), 0 0 4px rgba(4,12,17,0.5); }
+.hd-r, .hero-place, .cmp, .sun, .row .nm, .row .tp { text-shadow:0 2px 16px rgba(4,12,17,0.85), 0 0 4px rgba(4,12,17,0.5); }
 
 .hero { margin-top:52px; display:flex; align-items:center; gap:34px; position:relative; }
 .hero-temp {
@@ -355,14 +390,9 @@ body {
 .day .dt i { font-style:normal; font-size:26px; color:#84A6B2; }
 .day .dp { margin-top:12px; font-size:21px; color:#6f8f9c; }
 
-.ft { margin-top:52px; padding:30px 36px; border-radius:22px;
-  background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14);
-  display:flex; align-items:center; justify-content:space-between; gap:30px; }
-.ft-l { min-width:0; }
-.ft-n { font-size:44px; letter-spacing:3px; color:#FFFFFF; }
-.ft-s { margin-top:14px; font-size:25px; color:#9CBCC6; letter-spacing:1px; }
-.ft-q { width:158px; height:158px; border-radius:16px; flex:none; background:#fff; padding:9px; }
-.ft-q img { width:100%; height:100%; display:block; border-radius:8px; }
+.ft { margin-top:48px; padding-top:26px; border-top:1px solid rgba(255,255,255,0.10);
+  display:flex; align-items:center; justify-content:center; gap:16px; }
+.ft-s { font-size:26px; color:#9CBCC6; letter-spacing:2px; }
 .src { margin-top:28px; font-size:19px; color:#4E6C79; letter-spacing:0.5px; }
 """
 
@@ -411,7 +441,7 @@ def build_html(data, cal=None):
         with open(QR_IMAGE, "rb") as _qf:
             _b64 = base64.b64encode(_qf.read()).decode("ascii")
         _mime = "image/png" if QR_IMAGE.lower().endswith(".png") else "image/jpeg"
-        qr = '<div class="ft-q"><img src="data:%s;base64,%s"></div>' % (_mime, _b64)
+        qr = '<div class="hd-q"><img src="data:%s;base64,%s"></div>' % (_mime, _b64)
 
     logo_html = ""
     if LOGO_IMAGE:
@@ -419,10 +449,15 @@ def build_html(data, cal=None):
             logo_html = '<img src="data:image/png;base64,%s" alt="弄月峨眉山居">' % (
                 base64.b64encode(_lf.read()).decode("ascii"))
 
-    _bg = bg_data_uri(top["code"])
-    _dim = " dim" if bg_key(top["code"]) in ("fog", "snow") else ""
+    _bgp = bg_path(top["code"])
+    _bg = bg_data_uri(_bgp)
+    _cls = ""
+    if bg_key(top["code"]) in ("fog", "snow"):
+        _cls += " dim"
+    if _bgp and bg_is_portrait(_bgp):
+        _cls += " tall"
     bg_html = ("<div class=\"hero-bg%s\" style='background-image:url(%s)'></div>"
-               % (_dim, _bg)) if _bg else ""
+               % (_cls, _bg)) if _bg else ""
 
     uvw = ""
     if top["uv"] is not None:
@@ -466,7 +501,7 @@ def build_html(data, cal=None):
 <div class="rings"><i></i><i></i><i></i></div>
 
 <div class="hd">
-  <div class="hd-l">%s</div>
+  <div class="hd-l">%s%s</div>
   <div class="hd-r">%d月%d日 %s · %s 更新</div>
 </div>
 
@@ -491,17 +526,14 @@ def build_html(data, cal=None):
 <div class="sec"><h2>未来三天</h2><span>金顶预报</span></div>
 <div class="days">%s</div>
 
-<div class="ft">
-  <div class="ft-l"><div class="ft-n">%s</div><div class="ft-s">%s</div></div>
-  %s
-</div>
+<div class="ft"><span class="ft-s">%s</span></div>
 <div class="src">实况：中国气象局自动站 · 预报：Open-Meteo 数值模式 · 图为自动生成，仅供参考</div>
 </div></body></html>""" % (
-        CSS, bg_html, logo_html, today.month, today.day, WEEK[today.weekday()], top["updated"] or "07:00",
+        CSS, bg_html, logo_html, qr, today.month, today.day, WEEK[today.weekday()], top["updated"] or "07:00",
         t_top, svg_icon(top["code"], 104), top["short"], hero_desc,
         low["short"], t_low, t_top, diff, sun_html, fest_html,
         TIP_ICON, cloth_tip(diff),
-        rows, days, SHOP_NAME, SHOP_TIP, qr
+        rows, days, SHOP_TIP
     )
 
 
