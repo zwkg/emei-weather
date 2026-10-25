@@ -62,6 +62,12 @@ QR_IMAGE = CFG.get("qr_image") or ""
 if not QR_IMAGE or not os.path.exists(QR_IMAGE):
     _fallback = os.path.join(BASE, "qr.png")
     QR_IMAGE = _fallback if os.path.exists(_fallback) else ""
+
+LOGO_IMAGE = CFG.get("logo_image") or "logo.png"
+if not os.path.isabs(LOGO_IMAGE):
+    LOGO_IMAGE = os.path.join(BASE, LOGO_IMAGE)
+if not os.path.exists(LOGO_IMAGE):
+    LOGO_IMAGE = ""
 WEEK = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
 
 
@@ -212,6 +218,7 @@ body {
 
 .hd { display:flex; align-items:center; justify-content:space-between; position:relative; }
 .hd-l { display:flex; align-items:center; gap:15px; font-size:28px; letter-spacing:3px; color:#B7CFD8; }
+.hd-l img { height:150px; width:auto; display:block; }
 .dot { width:10px; height:10px; border-radius:50%; background:#5BD3B4; box-shadow:0 0 0 6px rgba(91,211,180,0.15); }
 .hd-r { font-size:24px; color:#71919E; letter-spacing:1px; }
 
@@ -335,6 +342,12 @@ def build_html(data, cal=None):
         _mime = "image/png" if QR_IMAGE.lower().endswith(".png") else "image/jpeg"
         qr = '<div class="ft-q"><img src="data:%s;base64,%s"></div>' % (_mime, _b64)
 
+    logo_html = ""
+    if LOGO_IMAGE:
+        with open(LOGO_IMAGE, "rb") as _lf:
+            logo_html = '<img src="data:image/png;base64,%s" alt="弄月峨眉山居">' % (
+                base64.b64encode(_lf.read()).decode("ascii"))
+
     uvw = ""
     if top["uv"] is not None:
         u = top["uv"]
@@ -376,7 +389,7 @@ def build_html(data, cal=None):
 <div class="rings"><i></i><i></i><i></i></div>
 
 <div class="hd">
-  <div class="hd-l"><span class="dot"></span>峨眉山 · 山景实况</div>
+  <div class="hd-l">%s</div>
   <div class="hd-r">%d月%d日 %s · %s 更新</div>
 </div>
 
@@ -407,7 +420,7 @@ def build_html(data, cal=None):
 </div>
 <div class="src">实况：中国气象局自动站 · 预报：Open-Meteo 数值模式 · 图为自动生成，仅供参考</div>
 </div></body></html>""" % (
-        CSS, today.month, today.day, WEEK[today.weekday()], top["updated"] or "07:00",
+        CSS, logo_html, today.month, today.day, WEEK[today.weekday()], top["updated"] or "07:00",
         t_top, svg_icon(top["code"], 104), top["short"], hero_desc,
         low["short"], t_low, t_top, diff, sun_html, fest_html,
         TIP_ICON, cloth_tip(diff),
