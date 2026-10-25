@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>峨眉山天气看板 · 实时天气 逐小时 7天</title>
+<meta name="description" content="峨眉山金顶、万年寺、报国寺等景点实时天气，逐小时预报与未来7天预报，含海拔气温对比和穿衣指数。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="峨眉山天气看板 · 实时天气 逐小时 7天">
+<meta property="og:description" content="金顶、万年寺、报国寺实时天气与未来7天预报，一眼看清山顶山脚温差。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.92em' font-size='88'%3E%E2%9B%85%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-overlay"></div>
+
+<header class="topbar">
+  <div class="titles">
+    <h1 id="app-title" class="app-title">我的天气看板</h1>
+    <p id="app-subtitle" class="app-subtitle">天气预报 · 逐小时 · 未来7天</p>
+    <div id="day-info" class="day-info"></div>
+  </div>
+  <div class="actions">
+    <button id="share-btn" class="icon-btn icon-share" title="分享转发" aria-label="分享转发">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="18" cy="5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="19" r="2.4"/>
+        <line x1="8.2" y1="10.9" x2="15.8" y2="6.2"/><line x1="8.2" y1="13.1" x2="15.8" y2="17.8"/>
+      </svg>
+    </button>
+    <button id="refresh-btn" class="icon-btn" title="刷新数据">↻</button>
+    <button id="admin-btn" class="mini-btn">🔑 管理登录</button>
+    <button id="settings-btn" class="icon-btn hidden" title="自定义设置">⚙</button>
+    <button id="admin-logout" class="mini-btn hidden">退出</button>
+  </div>
+</header>
+
+<main id="cards" class="cards"></main>
+
+<section id="elevation-section" class="elev-section">
+  <h2 class="elev-title">峨眉山海拔气温剖面 · 今日实时</h2>
+  <div id="elev-chart" class="elev-chart"></div>
+  <p class="elev-hint">5 个景点当前温度随海拔变化，直观对比山顶与山脚温差（金顶 3077m ↔ 报国寺约 500m）。</p>
+</section>
+
+<!-- 底部攻略入口（预留位：文案与内容可在管理设置里填写） -->
+<section id="guides" class="guides">
+  <div class="guide-grid">
+    <button class="guide-card guide-hike" data-guide="hiking" type="button">
+      <span class="guide-emoji">🥾</span>
+      <span class="guide-text">
+        <span class="guide-name">峨眉山徒步攻略</span>
+        <span class="guide-sub">上山路线 · 徒步时长 · 装备清单</span>
+      </span>
+      <span class="guide-go">→</span>
+    </button>
+    <button class="guide-card guide-food" data-guide="food" type="button">
+      <span class="guide-emoji">🍲</span>
+      <span class="guide-text">
+        <span class="guide-name">峨眉山美食攻略</span>
+        <span class="guide-sub">山脚小吃 · 寺院素斋 · 推荐店铺</span>
+      </span>
+      <span class="guide-go">→</span>
+    </button>
+  </div>
+</section>
+
+<!-- 民宿名片：店名 + 微信二维码 -->
+<section class="contact">
+  <div class="contact-card">
+    <div class="contact-info">
+      <div class="contact-name">弄月峨眉山居民宿</div>
+      <div class="contact-sub">长按识别二维码 · 加微信订房咨询</div>
+    </div>
+    <img class="contact-qr" src="qr.png" alt="弄月峨眉山居民宿微信二维码">
+  </div>
+</section>
+
+<footer class="footer">
+  <span id="footer-source">数据来源：中国气象局自动站实况（金顶站／峨眉山市站）+ Open-Meteo 数值预报；无实测站的点按实测温度廓线插值</span>
+</footer>
+
+<!-- 全屏详情 -->
+<div id="detail" class="detail hidden">
+  <div class="detail-inner">
+    <button id="detail-close" class="detail-close" title="返回">✕</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div id="settings" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>自定义设置</h2>
+      <button id="settings-close" class="icon-btn">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="field">
+        <span>主标题文字</span>
+        <input id="set-title" type="text" maxlength="30">
+      </label>
+      <label class="field">
+        <span>副标题文字</span>
+        <input id="set-subtitle" type="text" maxlength="40">
+      </label>
+
+      <label class="field check-field">
+        <input id="set-use-obs" type="checkbox">
+        <span>接入实测站自动校正（每个景点各自取实测，推荐开启）</span>
+      </label>
+      <p class="hint">开启后自动为每个景点找实测；没有独立实测的点，用最近的低海拔实测站按海拔差推算（失败自动回退模型值）。</p>
+
+      <label class="field">
+        <span>和风天气 API Key（可选）</span>
+        <input id="set-qweather-key" type="text" placeholder="填了则该点也有独立实况；留空用自动站 + wttr.in">
+      </label>
+      <p class="hint">峨眉山景区公开的实测站只有金顶站和山脚峨眉山市站，万年寺／雷洞坪暂无实时站。填和风 Key（dev.qweather.com 免费，每天约 1000 次）后，每个景点都会按经纬度返回独立实况，作为补充数据源。</p>
+
+      <label class="field">
+        <span>手动微调偏移 (°C)</span>
+        <input id="set-tempoffset" type="number" step="0.1" placeholder="0（在实况校正基础上再微调）">
+      </label>
+      <p class="hint">默认 0。只有在实况校正后仍想整体再调几度时才用（如 -1）。</p>
+
+      <div class="field">
+        <span>背景图片</span>
+        <div class="bg-controls">
+          <input id="set-bg-url" type="text" placeholder="粘贴图片链接（URL）">
+          <button id="set-bg-url-btn" class="mini-btn">用链接</button>
+          <label class="mini-btn file-btn">上传图片
+            <input id="set-bg-file" type="file" accept="image/*" hidden>
+          </label>
+          <button id="set-bg-clear" class="mini-btn danger">清除</button>
+        </div>
+        <p class="hint" id="bg-hint">不设置则使用默认渐变背景。</p>
+      </div>
+
+      <div class="field">
+        <span>地区列表（至少 3 个）</span>
+        <div id="region-list" class="region-list"></div>
+        <button id="add-region" class="mini-btn">+ 添加地区</button>
+      </div>
+
+      <div class="field">
+        <span>底部攻略入口（留空则用默认文案，内容显示「准备中」）</span>
+        <div class="guide-settings">
+          <p class="gs-title">🥾 峨眉山徒步攻略</p>
+          <input id="set-guide-hike-title" type="text" maxlength="20" placeholder="标题（默认：峨眉山徒步攻略）">
+          <input id="set-guide-hike-sub" type="text" maxlength="30" placeholder="一句话简介">
+          <textarea id="set-guide-hike-body" rows="4" placeholder="正文内容，支持换行"></textarea>
+          <input id="set-guide-hike-url" type="text" placeholder="跳转链接（可选，填了会显示「打开攻略」按钮）">
+          <p class="gs-title">🍲 峨眉山美食攻略</p>
+          <input id="set-guide-food-title" type="text" maxlength="20" placeholder="标题（默认：峨眉山美食攻略）">
+          <input id="set-guide-food-sub" type="text" maxlength="30" placeholder="一句话简介">
+          <textarea id="set-guide-food-body" rows="4" placeholder="正文内容，支持换行"></textarea>
+          <input id="set-guide-food-url" type="text" placeholder="跳转链接（可选）">
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button id="settings-reset" class="mini-btn danger">恢复默认</button>
+        <button id="settings-save" class="mini-btn primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="admin-title">管理员登录</h2>
+        <button id="admin-close" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="admin-setup" class="hidden">
+          <p class="hint">首次使用：设置一个管理员账号，之后只有凭此账号登录才能修改看板（地区、文字、背景等）。访客无需登录，可直接浏览天气。</p>
+          <label class="field"><span>管理员用户名</span><input id="admin-new-user" type="text" maxlength="20" placeholder="如 admin"></label>
+          <label class="field"><span>密码</span><input id="admin-new-pass" type="password" placeholder="至少4位"></label>
+          <label class="field"><span>确认密码</span><input id="admin-new-pass2" type="password"></label>
+        </div>
+        <div id="admin-login">
+          <label class="field"><span>用户名</span><input id="admin-user" type="text" placeholder="管理员用户名"></label>
+          <label class="field"><span>密码</span><input id="admin-pass" type="password" placeholder="密码"></label>
+          <p class="hint" id="admin-msg"></p>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button id="admin-cancel" class="mini-btn">取消</button>
+        <button id="admin-submit" class="mini-btn primary">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分享弹窗 -->
+  <div id="share" class="modal hidden">
+    <div class="modal-card share-card">
+      <div class="modal-head">
+        <h2>分享这个看板</h2>
+        <button id="share-close" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="share-qr-box">
+          <img id="share-qr" class="share-qr" alt="扫码打开看板">
+          <p class="share-qr-tip">微信「扫一扫」直接打开</p>
+        </div>
+        <label class="field">
+          <span>看板链接（点击可全选）</span>
+          <input id="share-url" type="text" readonly>
+        </label>
+        <div class="share-btns">
+          <button id="share-copy" class="mini-btn primary">复制链接</button>
+          <button id="share-native" class="mini-btn hidden">系统分享</button>
+        </div>
+        <div class="share-im">
+          <span class="share-im-label">分享到</span>
+          <a id="share-weibo" class="share-im-btn" href="#" target="_blank" rel="noopener">微博</a>
+          <a id="share-qq" class="share-im-btn" href="#" target="_blank" rel="noopener">QQ</a>
+          <a id="share-mail" class="share-im-btn" href="#">邮件</a>
+        </div>
+        <p class="hint">微信没有开放网页分享接口：手机点「系统分享」可直接选微信；电脑端复制链接后到微信粘贴即可。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 攻略内容弹窗 -->
+  <div id="guide-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="guide-modal-title">攻略</h2>
+        <button id="guide-modal-close" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body" id="guide-modal-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+<script src="calendar.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

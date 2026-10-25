@@ -1,0 +1,832 @@
+:root {
+  --card-bg: rgba(255, 255, 255, 0.18);
+  --card-border: rgba(255, 255, 255, 0.35);
+  --text: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.78);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  --accent: rgba(255, 255, 255, 0.25);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  background: linear-gradient(135deg, #4a6fa5 0%, #6a8caf 40%, #93b5cf 100%);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  transition: background-image 0.4s ease;
+}
+
+.bg-overlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(10, 20, 40, 0.35), rgba(10, 20, 40, 0.15));
+  pointer-events: none;
+  z-index: 0;
+}
+
+.topbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 32px 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.app-title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.app-subtitle {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* 节气 / 法定节假日 */
+.day-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.day-info:empty { display: none; }
+.di-term {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(255, 190, 120, 0.24);
+  border: 1px solid rgba(255, 190, 120, 0.48);
+  color: #FFE3C0;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.di-term.is-today {
+  background: rgba(255, 190, 120, 0.34);
+  color: #FFF3E4;
+}
+.di-sep { opacity: 0.4; }
+.di-holiday b { color: #FFD7A6; font-weight: 600; }
+.di-holiday.is-in b { color: #FFB8A0; }
+
+.actions { display: flex; gap: 10px; align-items: center; }
+.actions .mini-btn { height: 44px; display: inline-flex; align-items: center; }
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text);
+  border-radius: 12px;
+  font-size: 20px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.icon-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.3); }
+.icon-btn:active { transform: translateY(0); }
+
+.cards {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 20px 32px 40px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 22px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+}
+
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.card-name { font-size: 22px; font-weight: 600; }
+.card-caption { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+.card-now { text-align: right; }
+.card-temp { font-size: 40px; font-weight: 700; line-height: 1; }
+.card-desc { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+.card-icon { font-size: 46px; text-align: center; }
+
+.card-hours {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.hour-cell {
+  flex: 0 0 auto;
+  text-align: center;
+  font-size: 12px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 8px 6px;
+  min-width: 48px;
+}
+.hour-cell .h-time { color: var(--text-dim); }
+.hour-cell .h-icon { font-size: 20px; margin: 4px 0; }
+.hour-cell .h-temp { font-weight: 600; }
+
+.card-loading, .card-error {
+  text-align: center;
+  padding: 30px 0;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.card-cloth {
+  font-size: 13px;
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+/* 数据来源小标（实测 / 海拔推算） */
+.card-src {
+  margin-top: 6px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  letter-spacing: .2px;
+}
+
+/* 海拔气温剖面 */
+.elev-section {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 10px 32px 30px;
+}
+.elev-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  border-left: 4px solid var(--card-border);
+  padding-left: 10px;
+}
+.elev-chart {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 16px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+}
+.elev-chart svg { width: 100%; height: auto; display: block; }
+.elev-hint { font-size: 13px; color: var(--text-dim); margin-top: 10px; }
+
+/* 穿衣指数 */
+.cloth-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 16px 20px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.cloth-icon { font-size: 44px; line-height: 1; }
+.cloth-level { font-size: 20px; font-weight: 700; }
+.cloth-advice { font-size: 14px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+
+/* 全屏详情 */
+.detail {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(8, 14, 28, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow-y: auto;
+  animation: fade 0.25s ease;
+}
+.detail-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px 24px 60px;
+  position: relative;
+  animation: rise 0.3s ease;
+}
+.detail-close {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 60;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+.detail-close:hover { background: rgba(255,255,255,0.32); }
+
+.d-hero {
+  text-align: center;
+  padding: 30px 0 10px;
+}
+.d-name { font-size: 34px; font-weight: 700; }
+.d-caption { color: var(--text-dim); margin-top: 4px; }
+.d-icon { font-size: 96px; line-height: 1.1; margin: 10px 0; }
+.d-temp { font-size: 72px; font-weight: 800; line-height: 1; }
+.d-desc { font-size: 20px; margin-top: 6px; }
+.d-feels { color: var(--text-dim); margin-top: 6px; }
+.d-source { color: rgba(255,255,255,0.55); font-size: 12px; margin-top: 8px; line-height: 1.5; }
+
+.d-section { margin-top: 28px; }
+.d-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  border-left: 4px solid var(--card-border);
+  padding-left: 10px;
+}
+
+.d-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+.stat {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+}
+.stat .s-label { font-size: 12px; color: var(--text-dim); }
+.stat .s-value { font-size: 20px; font-weight: 600; margin-top: 6px; }
+
+.d-hours {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.d-hour {
+  flex: 0 0 auto;
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 12px 10px;
+  min-width: 72px;
+}
+.d-hour .dh-time { font-size: 13px; color: var(--text-dim); }
+.d-hour .dh-icon { font-size: 28px; margin: 8px 0; }
+.d-hour .dh-temp { font-weight: 700; font-size: 16px; }
+.d-hour .dh-pop { font-size: 11px; color: #bfe3ff; margin-top: 4px; }
+
+.d-days { display: flex; flex-direction: column; gap: 8px; }
+.d-day {
+  display: grid;
+  grid-template-columns: 90px 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+.d-day .dd-day { font-weight: 600; }
+.d-day .dd-day small { display:block; color: var(--text-dim); font-weight: 400; font-size: 12px; }
+.d-day .dd-icon { font-size: 26px; text-align: center; }
+.d-day .dd-bar { height: 8px; border-radius: 6px; background: linear-gradient(90deg, #6ec6ff, #ffd166); position: relative; }
+.d-day .dd-temps { font-weight: 600; white-space: nowrap; }
+
+/* 弹窗 */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(8, 14, 28, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-card {
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: rgba(28, 38, 60, 0.95);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 22px;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.modal-head h2 { font-size: 20px; }
+.modal-body { display: flex; flex-direction: column; gap: 18px; }
+.modal-foot { display: flex; justify-content: space-between; margin-top: 22px; }
+
+.field { display: flex; flex-direction: column; gap: 8px; }
+.check-field { flex-direction: row; align-items: center; gap: 10px; }
+.check-field input[type="checkbox"] { width: 16px; height: 16px; accent-color: #6ec6ff; }
+.check-field > span { font-size: 14px; color: var(--text); }
+.field > span { font-size: 14px; color: var(--text-dim); }
+.field input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255,255,255,0.1);
+  color: var(--text);
+  font-size: 14px;
+}
+.field input::placeholder { color: rgba(255,255,255,0.45); }
+
+.bg-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bg-controls input[type="text"] { flex: 1; min-width: 180px; }
+.hint { font-size: 12px; color: var(--text-dim); }
+
+.mini-btn {
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255,255,255,0.12);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.mini-btn:hover { background: rgba(255,255,255,0.25); }
+.mini-btn.primary { background: #3a7bd5; border-color: #3a7bd5; }
+.mini-btn.primary:hover { background: #4a8be5; }
+.mini-btn.danger { background: rgba(220, 80, 80, 0.35); border-color: rgba(220,80,80,0.5); }
+.mini-btn.danger:hover { background: rgba(220, 80, 80, 0.55); }
+.file-btn { display: inline-flex; align-items: center; }
+
+.region-list { display: flex; flex-direction: column; gap: 10px; }
+.region-row { display: flex; gap: 8px; align-items: center; }
+.region-row input { flex: 1; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--card-border); background: rgba(255,255,255,0.1); color: var(--text); font-size: 13px; }
+.region-row .rr-caption { flex: 0 0 38%; }
+.region-row .rr-del { flex: 0 0 auto; width: 36px; height: 36px; }
+
+/* 民宿名片：店名 + 微信二维码 */
+.contact {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 6px 32px 14px;
+}
+.contact-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 26px;
+  border-radius: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(12px);
+}
+.contact-name { font-size: 22px; font-weight: 600; letter-spacing: 1px; }
+.contact-sub { margin-top: 8px; font-size: 13.5px; color: var(--text-dim); }
+.contact-qr {
+  width: 112px;
+  height: 112px;
+  flex: none;
+  display: block;
+  border-radius: 14px;
+  background: #fff;
+  padding: 8px;
+}
+
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding: 0 0 24px;
+}
+
+/* ===== 分享 ===== */
+.icon-share { display: inline-flex; align-items: center; justify-content: center; }
+.icon-share svg { display: block; }
+
+.share-card { max-width: 430px; }
+.share-qr-box { text-align: center; }
+.share-qr {
+  width: 176px;
+  height: 176px;
+  background: #fff;
+  padding: 8px;
+  border-radius: 14px;
+  display: block;
+  margin: 0 auto 10px;
+  box-sizing: content-box;
+}
+.share-qr-tip { font-size: 13px; color: var(--text-dim); }
+.share-btns { display: flex; gap: 10px; }
+.share-btns .mini-btn { flex: 1; justify-content: center; height: 44px; }
+.share-im { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.share-im-label { font-size: 13px; color: var(--text-dim); }
+.share-im-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+.share-im-btn:hover { background: rgba(255,255,255,0.28); }
+
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  background: rgba(20, 28, 48, 0.95);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: var(--shadow);
+  animation: fade 0.2s ease;
+}
+
+.hidden { display: none !important; }
+
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===================== 底部攻略入口（预留位） ===================== */
+.guides {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 4px 32px 12px;
+}
+.guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.guide-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 152px;
+  padding: 20px 22px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.guide-hike { background: linear-gradient(135deg, rgba(38, 150, 104, 0.62), rgba(18, 78, 60, 0.5)); }
+.guide-food { background: linear-gradient(135deg, rgba(226, 124, 48, 0.62), rgba(146, 60, 20, 0.5)); }
+.guide-card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32); border-color: rgba(255, 255, 255, 0.55); }
+.guide-card:active { transform: translateY(-1px); }
+.guide-emoji { font-size: 34px; line-height: 1; flex: 0 0 auto; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35)); }
+.guide-text { display: flex; flex-direction: column; gap: 5px; flex: 1 1 auto; min-width: 0; }
+.guide-name { font-size: 19px; font-weight: 700; letter-spacing: 0.5px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); }
+.guide-sub { font-size: 12.5px; color: rgba(255, 255, 255, 0.85); }
+.guide-go { font-size: 20px; opacity: 0.75; flex: 0 0 auto; }
+
+/* 攻略弹窗正文 */
+.guide-body-text { margin: 0 0 14px; font-size: 14.5px; line-height: 1.9; white-space: pre-wrap; word-break: break-word; }
+.guide-empty { text-align: center; padding: 26px 0; color: var(--text-dim); font-size: 14px; }
+.guide-open-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+}
+.guide-open-link:hover { background: rgba(255, 255, 255, 0.28); }
+
+/* 设置里的攻略字段 */
+.guide-settings { display: flex; flex-direction: column; gap: 8px; }
+.guide-settings .gs-title { margin: 8px 0 0; font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.guide-settings textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.65;
+  resize: vertical;
+}
+.guide-settings textarea::placeholder { color: rgba(255, 255, 255, 0.45); }
+
+/* ===================== 地点详情页（新版） ===================== */
+.dt-hero {
+  padding: 22px 22px 20px;
+  border-radius: 24px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.19), rgba(255,255,255,0.07));
+  border: 1px solid rgba(255,255,255,0.28);
+  box-shadow: var(--shadow);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.dt-loc { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dt-pin { font-size: 15px; opacity: 0.9; }
+.dt-locname { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+.dt-elev {
+  font-size: 12px; color: var(--text-dim);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 99px; padding: 2px 10px;
+}
+.dt-hero-main {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-top: 12px;
+}
+.dt-tempbox { display: flex; align-items: flex-start; line-height: 0.92; }
+.dt-temp { font-size: 92px; font-weight: 800; letter-spacing: -4px; }
+.dt-c { font-size: 20px; font-weight: 600; margin-top: 12px; margin-left: 3px; opacity: 0.85; }
+.dt-hero-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
+.dt-bigicon { font-size: 56px; line-height: 1.05; }
+.dt-desc { font-size: 17px; font-weight: 600; }
+.dt-range { font-size: 13px; color: var(--text-dim); }
+.dt-metabar { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.dt-metabar span {
+  font-size: 12.5px; color: var(--text-dim);
+  background: rgba(255,255,255,0.13);
+  border-radius: 99px; padding: 4px 11px;
+}
+.dt-src { margin-top: 13px; font-size: 12.5px; color: var(--text-dim); }
+.dt-live { color: #7ef0b0; font-weight: 700; }
+.dt-interp { color: #ffd166; font-weight: 700; }
+.dt-model { color: #9ecbff; font-weight: 700; }
+
+.dt-block { margin-top: 22px; }
+.dt-block-title {
+  font-size: 15px; font-weight: 700; margin-bottom: 10px;
+  padding-left: 4px; letter-spacing: 0.3px;
+}
+.dt-block-title small { font-weight: 400; font-size: 11px; color: var(--text-dim); margin-left: 6px; }
+
+/* 逐小时 */
+.dt-hours {
+  display: flex; gap: 6px; overflow-x: auto;
+  padding: 12px 10px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 18px;
+  scrollbar-width: thin;
+}
+.dt-hours::-webkit-scrollbar { height: 4px; }
+.dt-hours::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
+.dt-hour {
+  flex: 0 0 auto; min-width: 56px;
+  padding: 8px 6px; border-radius: 13px;
+  text-align: center; border: 1px solid transparent;
+}
+.dt-hour.now { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.42); }
+.dt-hour .h-time { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+.dt-hour.now .h-time { color: #fff; font-weight: 700; }
+.dt-hour .h-icon { font-size: 22px; margin: 6px 0 4px; line-height: 1.1; }
+.dt-hour .h-temp { font-size: 15px; font-weight: 700; }
+.dt-hour .h-pop { font-size: 10px; color: #a8dcff; height: 13px; }
+
+/* 7 天 */
+.dt-days {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 18px;
+  padding: 2px 14px;
+}
+.dt-day {
+  display: grid;
+  grid-template-columns: 60px 30px 1fr 96px 64px;
+  align-items: center; gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.dt-day:last-child { border-bottom: none; }
+.dd-when b { font-size: 14px; font-weight: 600; }
+.dd-when small { display: block; font-size: 11px; color: var(--text-dim); }
+.dd-ico { font-size: 21px; text-align: center; }
+.dd-txt { font-size: 13.5px; }
+.dd-txt small { color: #a8dcff; font-size: 11px; margin-left: 5px; }
+.dd-track { position: relative; height: 6px; border-radius: 99px; background: rgba(255,255,255,0.16); }
+.dd-track span {
+  position: absolute; top: 0; bottom: 0; border-radius: 99px;
+  background: linear-gradient(90deg, #6ec6ff, #ffd166, #ff9a5c);
+}
+.dd-tp { text-align: right; font-size: 13.5px; white-space: nowrap; }
+.dd-tp b { font-weight: 700; }
+.dd-tp span { color: var(--text-dim); margin-left: 5px; }
+
+/* 指标网格 */
+.dt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.dt-card {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
+  padding: 13px 14px 14px;
+}
+.dt-card-wide { grid-column: span 2; }
+.dt-ch { display: flex; align-items: center; gap: 6px; }
+.dt-ci { font-size: 14px; line-height: 1; }
+.dt-cl { font-size: 12px; color: var(--text-dim); }
+.dt-cv { font-size: 26px; font-weight: 700; margin-top: 9px; line-height: 1; }
+.dt-cv small { font-size: 12px; font-weight: 500; color: var(--text-dim); margin-left: 3px; }
+.dt-cv-row { display: flex; align-items: center; gap: 8px; }
+.dt-arrow { display: inline-block; font-size: 20px; line-height: 1; transition: transform 0.3s ease; }
+.dt-cs { font-size: 12px; color: var(--text-dim); margin-top: 7px; }
+.dt-note { font-size: 11.5px; color: #ffd166; margin-top: 6px; line-height: 1.4; }
+.dt-bar {
+  height: 5px; border-radius: 99px;
+  background: rgba(255,255,255,0.16);
+  margin-top: 10px; overflow: hidden;
+}
+.dt-bar i { display: block; height: 100%; border-radius: 99px; }
+
+/* 日出日落 / 降水 */
+.dt-sun { display: flex; align-items: center; gap: 12px; margin-top: 13px; }
+.dt-sun-time { flex: 0 0 auto; text-align: center; }
+.dt-sun-time b { display: block; font-size: 15px; font-weight: 700; }
+.dt-sun-time small { font-size: 11px; color: var(--text-dim); }
+.dt-sun-track {
+  position: relative; flex: 1; height: 6px; border-radius: 99px;
+  background: linear-gradient(90deg, #2b4a6f, #f0a04b, #2b4a6f);
+}
+.dt-sun-track i {
+  position: absolute; top: -3px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #ffd166;
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.9);
+  transform: translateX(-50%);
+}
+.dt-rain { display: flex; gap: 10px; margin-top: 13px; }
+.dt-rain span { flex: 1; text-align: center; }
+.dt-rain b { display: block; font-size: 19px; font-weight: 700; }
+.dt-rain small { font-size: 11px; color: var(--text-dim); }
+
+/* 空气质量 */
+.dt-aq {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; margin-top: 12px; flex-wrap: wrap;
+}
+.aq-main { display: flex; align-items: baseline; gap: 7px; }
+.aq-main b { font-size: 28px; font-weight: 800; line-height: 1; }
+.aq-main small { font-size: 11px; color: var(--text-dim); }
+.aq-main em {
+  font-style: normal; font-size: 13px; font-weight: 700;
+  padding: 2px 10px; border-radius: 99px;
+  background: rgba(255,255,255,0.14);
+}
+.aq-tone-good { color: #7ef0b0; }
+.aq-tone-warm { color: #ffd166; }
+.aq-tone-warn { color: #ff9b8a; }
+.aq-tone-cool { color: #9ecbff; }
+.aq-parts { display: flex; gap: 16px; }
+.aq-parts span { display: flex; flex-direction: column; font-size: 11px; color: var(--text-dim); }
+.aq-parts b { font-size: 15px; font-weight: 700; color: #fff; margin-top: 3px; }
+
+/* 生活指数 */
+.dt-life { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+.dt-life-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 12px 7px 11px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px; text-align: center;
+}
+.li-ico { font-size: 22px; line-height: 1; }
+.li-name { font-size: 11.5px; color: var(--text-dim); }
+.li-level { font-size: 13px; font-weight: 700; }
+.li-tip {
+  font-size: 10px; color: var(--text-dim); line-height: 1.35;
+  margin-top: 2px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tone-good .li-level { color: #7ef0b0; }
+.tone-warm .li-level { color: #ffd166; }
+.tone-warn .li-level { color: #ff9b8a; }
+.tone-cool .li-level { color: #9ecbff; }
+
+.dt-foot {
+  margin-top: 22px; padding: 14px 16px;
+  font-size: 11.5px; line-height: 1.7;
+  color: rgba(255,255,255,0.58);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+}
+
+@media (max-width: 760px) {
+  .dt-grid { grid-template-columns: repeat(2, 1fr); }
+  /* 生活指数保持 4 列（与常见天气 App 一致）；文字说明在窄屏隐藏，
+     只留"图标 + 名称 + 等级"，避免挤成一团看不清 */
+  .dt-life { grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .dt-life-item { padding: 10px 4px 9px; border-radius: 12px; }
+  .li-tip { display: none; }
+  .li-name { font-size: 11px; }
+  .li-level { font-size: 12.5px; }
+}
+
+@media (max-width: 600px) {
+  .detail-inner { padding: 14px 12px 50px; }
+  .detail-close { top: 12px; right: 12px; width: 40px; height: 40px; font-size: 17px; }
+  .dt-hero { padding: 18px 16px 16px; border-radius: 20px; }
+  .dt-locname { font-size: 18px; }
+  .dt-temp { font-size: 68px; letter-spacing: -3px; }
+  .dt-c { font-size: 16px; margin-top: 8px; }
+  .dt-bigicon { font-size: 44px; }
+  .dt-desc { font-size: 15px; }
+  .dt-day { grid-template-columns: 50px 26px 1fr 56px 58px; gap: 6px; padding: 10px 0; }
+  .dd-txt { font-size: 12.5px; }
+  .dd-when b { font-size: 13px; }
+  .dt-card { padding: 11px 12px 12px; }
+  .dt-cv { font-size: 23px; }
+  .dt-hour { min-width: 52px; }
+  .dt-hours { padding: 10px 8px; }
+  .li-tip { font-size: 9.5px; }
+}
+
+@media (max-width: 600px) {
+  .topbar { padding: 16px 14px 8px; gap: 10px; flex-wrap: wrap; }
+  .app-title { font-size: 22px; letter-spacing: 0.5px; }
+  .actions { gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+  .icon-btn { width: 40px; height: 40px; }
+  .actions .mini-btn { height: 40px; }
+  .cards { padding: 10px 14px 28px; gap: 14px; }
+  .card { padding: 16px; border-radius: 16px; }
+  .card-name { font-size: 19px; }
+  .card-temp { font-size: 34px; }
+  .card-icon { font-size: 34px; line-height: 1.15; margin: 2px 0; }
+  /* 手机上 8 个时次平分卡片宽度，避免右半边被裁掉看不全 */
+  .card-hours { gap: 4px; scrollbar-width: none; }
+  .card-hours::-webkit-scrollbar { display: none; }
+  .hour-cell { flex: 1 1 0; min-width: 0; padding: 6px 2px; font-size: 11px; border-radius: 8px; }
+  .hour-cell .h-time { font-size: 10px; letter-spacing: -0.3px; }
+  .hour-cell .h-icon { font-size: 15px; margin: 3px 0; }
+  .d-temp { font-size: 56px; }
+  .d-icon { font-size: 72px; }
+  .guides { padding: 2px 14px 4px; }
+  .guide-grid { grid-template-columns: 1fr; gap: 12px; }
+  .guide-card { padding: 16px 18px; border-radius: 16px; gap: 13px; min-height: 148px; }
+  .guide-emoji { font-size: 28px; }
+  .guide-name { font-size: 17px; }
+  .contact { padding: 2px 14px 8px; }
+  .contact-card { padding: 15px 16px; gap: 14px; border-radius: 16px; }
+  .contact-name { font-size: 18px; letter-spacing: 0.5px; }
+  .contact-sub { font-size: 12px; margin-top: 6px; }
+  .contact-qr { width: 90px; height: 90px; padding: 6px; border-radius: 12px; }
+}

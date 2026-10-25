@@ -1,0 +1,13 @@
+{
+  "name": "emei-weather-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "峨眉山景点天气看板：中国气象局自动站实测 + Open-Meteo 预报，逐小时与7天预报",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,70 @@
+name: 峨眉山天气长图
+
+on:
+  schedule:
+    # UTC 23:00 = 北京时间次日 07:00
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-card
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Asia/Shanghai
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装中文字体
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk
+          fc-cache -f > /dev/null
+
+      - name: 安装依赖
+        run: |
+          python -m pip install -q --upgrade pip
+          pip install -q playwright pillow
+          python -m playwright install --with-deps chromium
+
+      - name: 生成天气图
+        env:
+          CARD_PROJECT: ${{ github.workspace }}/web
+          CARD_OUT: ${{ github.workspace }}/out
+          CARD_PORT: "8080"
+        run: |
+          python card/make_card.py
+          find out -name "emei-*.jpg" -mtime +30 -delete
+
+      - name: 提交到仓库
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          git add -A out web/.obs-lastgood.json
+          if git diff --cached --quiet; then
+            echo "没有变化，跳过提交"
+          else
+            git commit -m "天气图 $(date +%F)"
+            git push
+          fi
+
+      - name: 微信推送
+        env:
+          SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
+          CARD_OUT: ${{ github.workspace }}/out
+        run: python card/push.py
