@@ -31,6 +31,7 @@
   "term": "霜降",
   "termDate": "10/23",
   "termIn": 4,
+  "termIsToday": false,
   "nextTerm": "立冬",
   "nextTermIn": 11,
   "holiday": null,
@@ -39,6 +40,8 @@
    "date": "1/1",
    "days": 66,
    "total": 3
-  }
+  },
+  "daysToNewYear": 66,
+  "inNewYearHoliday": false
  }
 }
