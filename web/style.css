@@ -36,23 +36,75 @@ body {
   z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 28px 32px 12px;
+  justify-content: flex-start;
+  gap: 22px;
+  padding: 22px 32px 10px;
   flex-wrap: wrap;
-  gap: 12px;
 }
 
-.app-title {
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+/* 最左：LOGO + 二维码 并排 */
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: none;
 }
 
-.app-subtitle {
-  font-size: 14px;
+.brand-logo {
+  height: 64px;
+  width: auto;
+  display: block;
+  flex: none;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+}
+
+/* 右侧：按钮 + 节气/倒计时 两排，与二维码同一水平带 */
+.right-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+
+/* 弱化「管理登录」：只有自己用，小字、暗、边缘化 */
+.admin-mini {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.42);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.admin-mini:hover { color: rgba(255, 255, 255, 0.8); border-color: rgba(255, 255, 255, 0.34); }
+
+/* 顶部右侧：微信二维码 + 操作按钮 */
+.actions { display: flex; gap: 10px; align-items: center; }
+.brand-qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  margin-right: 4px;
+}
+.brand-qr {
+  width: 84px;
+  height: 84px;
+  display: block;
+  border-radius: 12px;
+  background: #fff;
+  padding: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+.brand-qr-tip {
+  font-size: 11px;
   color: var(--text-dim);
-  margin-top: 4px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 /* 节气 / 法定节假日 */
@@ -61,7 +113,7 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 9px;
-  margin-top: 10px;
+  margin-top: 0;
   font-size: 13px;
   color: var(--text-dim);
 }
@@ -801,11 +853,24 @@ body {
 }
 
 @media (max-width: 600px) {
-  .topbar { padding: 16px 14px 8px; gap: 10px; flex-wrap: wrap; }
-  .app-title { font-size: 22px; letter-spacing: 0.5px; }
-  .actions { gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
-  .icon-btn { width: 40px; height: 40px; }
-  .actions .mini-btn { height: 40px; }
+  .topbar { padding: 16px 14px 8px; gap: 8px; align-items: center; }
+  /* 打散分组，让操作图标与二维码同排 */
+  .brand-group,
+  .right-group { display: contents; }
+  .brand-logo { order: 1; height: 58px; }
+  .brand-qr-wrap { order: 2; width: 62px; position: relative; }
+  .brand-qr { width: 62px; height: 62px; padding: 5px; }
+  .brand-qr-tip {
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    margin-top: 3px; width: 62px;
+    font-size: 8.5px; letter-spacing: 0; line-height: 1.15;
+    white-space: normal; text-align: center;
+  }
+  .actions { order: 3; gap: 6px; flex-wrap: nowrap; }
+  .icon-btn { width: 36px; height: 36px; font-size: 17px; }
+  .admin-mini { padding: 3px 7px; font-size: 10px; }
+  /* 倒数/日期 第二排居中（留出二维码提示文字的高度） */
+  .day-info { order: 4; flex: 1 0 100%; justify-content: center; margin-top: 24px; }
   .cards { padding: 10px 14px 28px; gap: 14px; }
   .card { padding: 16px; border-radius: 16px; }
   .card-name { font-size: 19px; }
