@@ -324,7 +324,9 @@ body {
   box-shadow:0 8px 26px rgba(3,10,14,0.42); }
 .hd-q img { width:100%; height:100%; display:block; border-radius:8px; }
 .dot { width:10px; height:10px; border-radius:50%; background:#5BD3B4; box-shadow:0 0 0 6px rgba(91,211,180,0.15); }
-.hd-r { font-size:24px; color:#71919E; letter-spacing:1px; }
+.hd-r { font-size:21px; color:#71919E; letter-spacing:1px; display:flex; align-items:baseline; gap:12px; }
+.hd-r .hd-date { font-size:31px; color:#DCEAF0; font-weight:600; letter-spacing:2px; white-space:nowrap; }
+.hd-r .hd-upd { font-size:20px; color:#6f8f9c; white-space:nowrap; }
 /* 文字压在照片上时要兜底，避免落在金色亮部读不清 */
 .hd-r, .hero-place, .cmp, .sun, .row .nm, .row .tp { text-shadow:0 2px 16px rgba(4,12,17,0.85), 0 0 4px rgba(4,12,17,0.5); }
 
@@ -478,20 +480,19 @@ def build_html(data, cal=None):
     fest_html = ""
     if cal:
         pill = ""
-        if cal.get("term"):
-            is_today = cal.get("termIn") == 0
-            pill = '<span class="fest-pill%s">%s%s</span>' % (
-                " is-today" if is_today else "",
-                cal["term"],
-                "（今天）" if is_today else "",
-            )
+        # 节气：今天显示节气名，否则显示「距下一个节气」倒计时（不再把已过的节气当当前节气）
+        if cal.get("termIsToday"):
+            pill = '<span class="fest-pill is-today">%s（今天）</span>' % cal["term"]
+        elif cal.get("nextTerm"):
+            pill = '<span class="fest-pill">距%s <b>%d</b> 天</span>' % (cal["nextTerm"], cal["nextTermIn"])
         right = ""
         if cal.get("holiday"):
             h = cal["holiday"]
             right = "%s 假期第 <b>%d/%d</b> 天" % (h["name"], h["day"], h["total"])
-        elif cal.get("nextHoliday"):
-            n = cal["nextHoliday"]
-            right = "距%s <b>%d</b> 天" % (n["name"], n["days"])
+        # 距离元旦倒计时（元旦假期期间不重复显示）
+        ny = cal.get("daysToNewYear")
+        if ny is not None and not cal.get("inNewYearHoliday"):
+            right += (" · " if right else "") + "距元旦 <b>%d</b> 天" % ny
         if pill or right:
             fest_html = '<div class="fest">%s<span>%s</span></div>' % (pill, right)
 
@@ -502,7 +503,7 @@ def build_html(data, cal=None):
 
 <div class="hd">
   <div class="hd-l">%s%s</div>
-  <div class="hd-r">%d月%d日 %s · %s 更新</div>
+  <div class="hd-r"><span class="hd-date">%d月%d日 %s</span><span class="hd-upd"> · %s 更新</span></div>
 </div>
 
 <div class="hero">
