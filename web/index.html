@@ -15,22 +15,29 @@
 <div class="bg-overlay"></div>
 
 <header class="topbar">
-  <div class="titles">
-    <h1 id="app-title" class="app-title">我的天气看板</h1>
-    <p id="app-subtitle" class="app-subtitle">天气预报 · 逐小时 · 未来7天</p>
-    <div id="day-info" class="day-info"></div>
+  <!-- 最左：LOGO + 二维码 并排 -->
+  <div class="brand-group">
+    <img id="brand-logo" class="brand-logo" src="logo.png" alt="弄月峨眉山居">
+    <div class="brand-qr-wrap">
+      <img class="brand-qr" src="qr.png" alt="弄月峨眉山居微信二维码">
+      <span class="brand-qr-tip">长按识别 · 微信订房</span>
+    </div>
   </div>
-  <div class="actions">
-    <button id="share-btn" class="icon-btn icon-share" title="分享转发" aria-label="分享转发">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <circle cx="18" cy="5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="19" r="2.4"/>
-        <line x1="8.2" y1="10.9" x2="15.8" y2="6.2"/><line x1="8.2" y1="13.1" x2="15.8" y2="17.8"/>
-      </svg>
-    </button>
-    <button id="refresh-btn" class="icon-btn" title="刷新数据">↻</button>
-    <button id="admin-btn" class="mini-btn">🔑 管理登录</button>
-    <button id="settings-btn" class="icon-btn hidden" title="自定义设置">⚙</button>
-    <button id="admin-logout" class="mini-btn hidden">退出</button>
+  <!-- 右侧：操作按钮 + 节气/倒计时，排成两排 -->
+  <div class="right-group">
+    <div class="actions">
+      <button id="share-btn" class="icon-btn icon-share" title="分享转发" aria-label="分享转发">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="18" cy="5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="19" r="2.4"/>
+          <line x1="8.2" y1="10.9" x2="15.8" y2="6.2"/><line x1="8.2" y1="13.1" x2="15.8" y2="17.8"/>
+        </svg>
+      </button>
+      <button id="refresh-btn" class="icon-btn" title="刷新数据">↻</button>
+      <button id="admin-btn" class="admin-mini" title="管理登录">管理</button>
+      <button id="settings-btn" class="icon-btn hidden" title="自定义设置">⚙</button>
+      <button id="admin-logout" class="admin-mini hidden" title="退出登录">退出</button>
+    </div>
+    <div id="day-info" class="day-info"></div>
   </div>
 </header>
 
@@ -61,17 +68,6 @@
       </span>
       <span class="guide-go">→</span>
     </button>
-  </div>
-</section>
-
-<!-- 民宿名片：店名 + 微信二维码 -->
-<section class="contact">
-  <div class="contact-card">
-    <div class="contact-info">
-      <div class="contact-name">弄月峨眉山居民宿</div>
-      <div class="contact-sub">长按识别二维码 · 加微信订房咨询</div>
-    </div>
-    <img class="contact-qr" src="qr.png" alt="弄月峨眉山居民宿微信二维码">
   </div>
 </section>
 
