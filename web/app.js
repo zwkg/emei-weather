@@ -734,14 +734,16 @@ function renderDayInfo() {
       parts.push('<span class="di-holiday is-in">' + info.holiday.name +
         ' 假期第 <b>' + info.holiday.day + '/' + info.holiday.total + '</b> 天</span>');
     }
-    if (info.term) {
-      const isToday = info.termIn === 0;
-      parts.push('<span class="di-term' + (isToday ? ' is-today' : '') + '">' +
-        info.term + (isToday ? ' · 今天' : '') + '</span>');
+    // 节气：今天显示节气名，否则显示「距下一个节气」倒计时
+    // （不再把「已过的节气」当成当前节气，例如 10/26 不应再显示 霜降）
+    if (info.termIsToday) {
+      parts.push('<span class="di-term is-today">' + info.term + ' · 今天</span>');
+    } else if (info.nextTerm) {
+      parts.push('<span class="di-term">距' + info.nextTerm + ' <b>' + info.nextTermIn + '</b> 天</span>');
     }
-    if (!info.holiday && info.nextHoliday) {
-      parts.push('<span class="di-holiday">距' + info.nextHoliday.name +
-        ' <b>' + info.nextHoliday.days + '</b> 天</span>');
+    // 距离元旦倒计时（元旦假期期间不重复显示）
+    if (!info.inNewYearHoliday && info.daysToNewYear != null) {
+      parts.push('<span class="di-holiday">距元旦 <b>' + info.daysToNewYear + '</b> 天</span>');
     }
     el.innerHTML = parts.join('<span class="di-sep">·</span>');
   } catch (e) {
@@ -790,8 +792,6 @@ function closeGuide() {
 }
 
 function renderHome() {
-  document.getElementById('app-title').textContent = settings.title;
-  document.getElementById('app-subtitle').textContent = settings.subtitle;
   document.title = `${settings.title} · 天气预报`;
   applyBackground();
   updateFooterSource();
@@ -1698,3 +1698,20 @@ probeBackend().then(() => loadObservations()).then(() => {
     console.info(`[实况] 后端=${backendOk ? '已连接' : '未连接'} 实测点=${okCnt}/${obsStations.length}`);
   }
 });
+
+// 节气 / 距节日倒计时：每分钟检查一次，跨过零点自动重算。
+// 这样页面即使长时间开着（或第二天才刷新），「霜降 · 距元旦 67 天」也会每天自动往前走，
+// 不再出现"日历卡在某一天不更新"的情况。
+(function scheduleDayInfo() {
+  let lastKey = '';
+  function tick() {
+    const n = new Date();
+    const key = n.getFullYear() + '-' + n.getMonth() + '-' + n.getDate();
+    if (key !== lastKey) {
+      lastKey = key;
+      try { renderDayInfo(); } catch (e) { /* 忽略偶发异常 */ }
+    }
+  }
+  tick();                       // 立即初始化一次
+  setInterval(tick, 60 * 1000); // 之后每分钟兜底检查
+})();
