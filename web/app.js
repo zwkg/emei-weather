@@ -15,8 +15,8 @@ const DEFAULT_SETTINGS = {
   },
   // 默认按海拔从低到高排列（山脚 → 山顶），一眼看出温差走向
   regions: [
-    { name: '峨眉山报国寺', caption: '山脚·海拔约500m' },
-    { name: '峨眉山万年寺', caption: '半山·海拔1000m' },
+    { name: '峨眉山报国寺', caption: '山脚·海拔约536m' },
+    { name: '峨眉山万年寺', caption: '半山·海拔1014m' },
     { name: '峨眉山雷洞坪', caption: '高山区·海拔约2430m' },
     { name: '峨眉山金顶', caption: '高山区·海拔3077m' }
   ]
@@ -27,18 +27,18 @@ const DEFAULT_SETTINGS = {
 const KNOWN_PLACES = {
   '金顶':   { lat: 29.5120, lon: 103.3330, display: '峨眉山金顶', realElevation: 3077 },
   '雷洞坪': { lat: 29.5280, lon: 103.3220, display: '峨眉山雷洞坪', realElevation: 2430 },
-  '万年寺': { lat: 29.5905, lon: 103.4055, display: '峨眉山万年寺', realElevation: 1000 },
+  '万年寺': { lat: 29.5905, lon: 103.4055, display: '峨眉山万年寺', realElevation: 1014 },
   '清音阁': { lat: 29.5650, lon: 103.4350, display: '峨眉山清音阁', realElevation: 710 },
-  '报国寺': { lat: 29.6000, lon: 103.4800, display: '峨眉山报国寺', realElevation: 500 },
+  '报国寺': { lat: 29.6000, lon: 103.4800, display: '峨眉山报国寺', realElevation: 536 },
   '峨眉山': { lat: 29.52287, lon: 103.33626, display: '峨眉山（四川·乐山）', realElevation: 500 }
 };
 // ===== 每个景点各自绑定实测站（中国气象局自动站 + 可插拔数据源）=====
 // cnCode: 中国天气网城市/景区站点代码；null 表示该景点无独立站点
 // 站点海拔由接口返回的气压反推校验，不写死，避免站点搬家/改动导致误判
 const OBS_STATIONS = [
-  { key: '报国寺', display: '峨眉山报国寺', lat: 29.6000, lon: 103.4800, elev: 500,  cnCode: '101271414', cnName: '峨眉山市站' },
+  { key: '报国寺', display: '峨眉山报国寺', lat: 29.6000, lon: 103.4800, elev: 536,  cnCode: '101271414', cnName: '峨眉山市站' },
   { key: '清音阁', display: '峨眉山清音阁', lat: 29.5650, lon: 103.4350, elev: 710,  cnCode: null,        cnName: '' },
-  { key: '万年寺', display: '峨眉山万年寺', lat: 29.5905, lon: 103.4055, elev: 1000, cnCode: null,        cnName: '' },
+  { key: '万年寺', display: '峨眉山万年寺', lat: 29.5905, lon: 103.4055, elev: 1014, cnCode: null,        cnName: '' },
   { key: '雷洞坪', display: '峨眉山雷洞坪', lat: 29.5280, lon: 103.3220, elev: 2430, cnCode: null,        cnName: '' },
   { key: '金顶',   display: '峨眉山金顶',   lat: 29.5120, lon: 103.3330, elev: 3077, cnCode: '101271409', cnName: '峨眉山站' }
 ];
@@ -158,6 +158,26 @@ try {
     localStorage.setItem('weather-elev-asc-v1', '1');
   }
 } catch { /* 隐私模式下 localStorage 不可写，忽略即可 */ }
+
+// 一次性迁移：海拔校准（报国寺 500→536m、万年寺 1000→1014m）。
+// 说明文案是存在 localStorage 里的，不迁移的话老访客会一直看到旧数字。
+try {
+  if (localStorage.getItem('weather-elev-fix-v1') !== '1') {
+    const FIX = { '峨眉山报国寺': ['500', '536'], '峨眉山万年寺': ['1000', '1014'] };
+    let dirty = false;
+    (settings.regions || []).forEach(r => {
+      const f = FIX[r.name];
+      if (!f || !r.caption) return;
+      const re = new RegExp('(海拔\\s*约?\\s*)' + f[0] + '(\\s*m)', 'i');
+      if (re.test(r.caption)) {
+        r.caption = r.caption.replace(re, '$1' + f[1] + '$2');
+        dirty = true;
+      }
+    });
+    if (dirty) saveSettings();
+    localStorage.setItem('weather-elev-fix-v1', '1');
+  }
+} catch { /* 同上，隐私模式忽略 */ }
 const geoCache = new Map();   // name -> {lat, lon, display}
 const dataCache = new Map();  // name -> forecast data
 // 实况基础数据版本号：每次 loadObservations 成功 +1。
