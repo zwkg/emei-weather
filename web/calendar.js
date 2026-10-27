@@ -27,7 +27,8 @@
     { name: '元旦', start: '2027-01-01', end: '2027-01-03', days: 3 },
     { name: '清明节', start: '2027-04-04', end: '2027-04-06', days: 3 },
     { name: '劳动节', start: '2027-05-01', end: '2027-05-03', days: 3 },
-    { name: '国庆节', start: '2027-10-01', end: '2027-10-07', days: 7 }
+    { name: '国庆节', start: '2027-10-01', end: '2027-10-07', days: 7 },
+    { name: '元旦', start: '2028-01-01', end: '2028-01-03', days: 3 }
   ];
 
   // ---------- 天文计算 ----------
@@ -157,14 +158,24 @@
       }
     }
 
+    // 元旦倒计时（距明年 1 月 1 日）
+    var daysToNewYear = diffDays(today, { y: today.y + 1, m: 1, d: 1 });
+    // 今天是否正好是某个节气（不再把「已过的节气」当成当前节气）
+    var termIsToday = prevTerm ? (diffDays(prevTerm.date, today) === 0) : false;
+    // 是否正处于「元旦」法定假期内（此时不再单独显示倒计时，避免重复）
+    var inNewYearHoliday = !!(inHoliday && inHoliday.name === '元旦');
+
     return {
       term: prevTerm ? prevTerm.name : '',
       termDate: prevTerm ? fmtShort(prevTerm.date) : '',
       termIn: prevTerm ? diffDays(prevTerm.date, today) : null,
+      termIsToday: termIsToday,
       nextTerm: nextTerm ? nextTerm.name : '',
       nextTermIn: nextTerm ? diffDays(today, nextTerm.date) : null,
       holiday: inHoliday,
-      nextHoliday: nextHoliday
+      nextHoliday: nextHoliday,
+      daysToNewYear: daysToNewYear,
+      inNewYearHoliday: inNewYearHoliday
     };
   }
 
@@ -175,13 +186,15 @@
     if (i.holiday) {
       parts.push(i.holiday.name + ' 假期第 ' + i.holiday.day + '/' + i.holiday.total + ' 天');
     }
-    if (i.term) {
-      var t = i.term;
-      if (i.termIn === 0) t += '（今天）';
-      parts.push(t);
+    // 节气：今天显示节气名，否则显示「距下一个节气」倒计时
+    if (i.termIsToday) {
+      parts.push(i.term + '（今天）');
+    } else if (i.nextTerm) {
+      parts.push('距' + i.nextTerm + ' ' + i.nextTermIn + ' 天');
     }
-    if (!i.holiday && i.nextHoliday) {
-      parts.push('距' + i.nextHoliday.name + ' ' + i.nextHoliday.days + ' 天');
+    // 距离元旦倒计时（元旦假期期间不单独显示）
+    if (!i.inNewYearHoliday && i.daysToNewYear != null) {
+      parts.push('距元旦 ' + i.daysToNewYear + ' 天');
     }
     return parts.join(' · ');
   }
