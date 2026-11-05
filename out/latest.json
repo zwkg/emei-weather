@@ -1,47 +1,47 @@
 {
- "date": "2026-11-05",
- "week": "周四",
+ "date": "2026-11-06",
+ "week": "周五",
  "spots": [
   {
    "short": "报国寺",
    "elev": 536,
-   "temp": 15,
+   "temp": 16,
    "src": "实测"
   },
   {
    "short": "万年寺",
    "elev": 1014,
-   "temp": 11,
+   "temp": 12,
    "src": "插值"
   },
   {
    "short": "雷洞坪",
    "elev": 2430,
-   "temp": 4,
+   "temp": 5,
    "src": "插值"
   },
   {
    "short": "金顶",
    "elev": 3077,
-   "temp": 1,
+   "temp": 3,
    "src": "实测"
   }
  ],
  "cal": {
   "term": "霜降",
   "termDate": "10/23",
-  "termIn": 13,
+  "termIn": 14,
   "termIsToday": false,
   "nextTerm": "立冬",
-  "nextTermIn": 2,
+  "nextTermIn": 1,
   "holiday": null,
   "nextHoliday": {
    "name": "元旦",
    "date": "1/1",
-   "days": 57,
+   "days": 56,
    "total": 3
   },
-  "daysToNewYear": 57,
+  "daysToNewYear": 56,
   "inNewYearHoliday": false
  }
 }
