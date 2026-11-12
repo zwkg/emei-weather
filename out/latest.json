@@ -1,6 +1,6 @@
 {
- "date": "2026-11-12",
- "week": "周四",
+ "date": "2026-11-13",
+ "week": "周五",
  "spots": [
   {
    "short": "报国寺",
@@ -30,18 +30,18 @@
  "cal": {
   "term": "立冬",
   "termDate": "11/7",
-  "termIn": 5,
+  "termIn": 6,
   "termIsToday": false,
   "nextTerm": "小雪",
-  "nextTermIn": 10,
+  "nextTermIn": 9,
   "holiday": null,
   "nextHoliday": {
    "name": "元旦",
    "date": "1/1",
-   "days": 50,
+   "days": 49,
    "total": 3
   },
-  "daysToNewYear": 50,
+  "daysToNewYear": 49,
   "inNewYearHoliday": false
  }
 }
